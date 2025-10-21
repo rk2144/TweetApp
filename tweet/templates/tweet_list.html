@@ -1,29 +1,50 @@
 {% extends "layout.html" %}
 
-{% block title %}
-Rinku and Tweet
-{% endblock %}
-{% block content %}
-<h1 class="text-center text-white"> 
-    Welcome to Chat&Tweet projects
-</h1>
-<a class="btn btn-primary mb-4" href="{% url 'tweet_create' %}">Create new tweet</a>
+{% block title %}Tweets{% endblock %}
 
-<div class="container row gap-3">
+{% block content %}
+<h1 class="text-center text-light">All Tweets</h1>
+<a class="btn btn-primary mb-4" href="{% url 'tweet_create' %}">Create New Tweet</a>
+<div class="row gap-3">
     {% for tweet in tweets %}
-    <div class="card" style="width: 18rem;">
-        {% if tweet.photo %}
-        <img src="{{ tweet.photo.url }}" class="card-img-top" alt="Tweet image">
-        {% endif %}
-        <div class="card-body">
-          <h5 class="card-title">{{ tweet.user.username }}</h5>
-          <p class="card-text">{{ tweet.text }}</p>
-          {% if tweet.user == user %}
-          <a href="{% url 'tweet_edit' tweet.id %}" class="btn btn-primary">Edit</a>
-          <a href="{% url 'tweet_delete' tweet.id %}" class="btn btn-danger">Delete</a>
-          {% endif %}
+    <div class="col-md-4">
+        <div class="card my-2">
+            {% if tweet.photo %}
+            <img src="{{ tweet.photo.url }}" class="card-img-top">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">@{{ tweet.user.username }}</h5>
+                <p class="card-text">{{ tweet.text }}</p>
+                <button class="btn btn-outline-danger like-btn" data-tweet-id="{{ tweet.id }}">
+                    ❤️ <span class="likes-count">{{ tweet.total_likes }}</span>
+                </button>
+                <a href="{% url 'tweet_detail' tweet.id %}" class="btn btn-outline-info btn-sm mt-2">View Details</a>
+                {% if tweet.user == user %}
+                <a href="{% url 'tweet_edit' tweet.id %}" class="btn btn-primary mt-2">Edit</a>
+                <a href="{% url 'tweet_delete' tweet.id %}" class="btn btn-danger mt-2">Delete</a>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function(){
+    $('.like-btn').click(function(){
+        let btn = $(this);
+        let tweetId = btn.data('tweet-id');
+        $.ajax({
+            url: '/' + tweetId + '/like_ajax/',
+            type: 'POST',
+            data: {'csrfmiddlewaretoken': '{{ csrf_token }}'},
+            success: function(response){
+                btn.find('.likes-count').text(response.likes_count);
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

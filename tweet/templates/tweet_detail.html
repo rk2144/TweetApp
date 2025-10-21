@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}Tweet Details{% endblock %}
+
+{% block content %}
+<div class="card bg-dark text-white mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@{{ tweet.user.username }}</h5>
+        <p class="card-text">{{ tweet.text }}</p>
+        {% if tweet.photo %}
+            <img src="{{ tweet.photo.url }}" class="img-fluid" alt="Tweet photo">
+        {% endif %}
+        <p class="text-muted">Posted on {{ tweet.created_at }}</p>
+
+        <!-- Like / Unlike Button -->
+       <!-- Like / Unlike Button -->
+<form method="post" action="{% url 'like_tweet_ajax' tweet.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-danger">
+        ❤️ Like ({{ tweet.total_likes }})
+    </button>
+</form>
+
+    </div>
+</div>
+
+<!-- Comments Section -->
+<h4>Comments ({{ comments.count }})</h4>
+<div class="list-group mb-3">
+    {% for comment in comments %}
+        <div class="list-group-item bg-secondary text-white">
+            <b>@{{ comment.user.username }}</b>: {{ comment.text }}
+            <small class="text-light">({{ comment.created_at|date:"M d, Y H:i" }})</small>
+        </div>
+    {% empty %}
+        <p>No comments yet. Be the first one!</p>
+    {% endfor %}
+</div>
+
+<!-- Add Comment Form -->
+{% if user.is_authenticated %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-success">Add Comment</button>
+    </form>
+{% else %}
+    <p class="text-warning">You must <a href="{% url 'login' %}">login</a> to comment.</p>
+{% endif %}
+{% endblock %}

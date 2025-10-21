@@ -1,39 +1,84 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 
-{% block title %} Home {% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
-  <div class="container text-center mt-5">
-      <h1 class="fw-bold text-primary">Welcome to Chat&Tweet 🚀</h1>
-      <p class="lead text-light">Your favorite place to share tweets and chat with friends!</p>
+<div class="text-center">
+    <h1 class="fw-bold text-primary">Welcome to Chat&Tweet 🚀</h1>
+    <p class="lead text-light">Share your thoughts & connect with friends!</p>
 
-      {% if user.is_authenticated %}
-          <p class="text-success">Hello, {{ user.username }}! Ready to share your thoughts?</p>
-          <a href="{% url 'tweet_create' %}" class="btn btn-success btn-lg me-2">Create Tweet</a>
-          <a href="{% url 'tweet_list' %}" class="btn btn-outline-light btn-lg">View Tweets</a>
-      {% else %}
-          <p class="text-warning">Join now to start tweeting and connecting with others.</p>
-          <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-2">Register</a>
-          <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
-      {% endif %}
-      
-      <hr class="my-4">
+    {% if user.is_authenticated %}
+        <div class="card my-3 p-3">
+            <h5>Create a new Tweet</h5>
+            <form method="post" enctype="multipart/form-data" action="{% url 'tweet_create' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="btn btn-success" type="submit">Tweet</button>
+            </form>
+        </div>
+    {% else %}
+        <p class="text-warning">Login to create a tweet!</p>
+    {% endif %}
 
-      <h3 class="text-light">Trending Tweets 🔥</h3>
-      <div class="row justify-content-center">
-          {% for tweet in tweets|slice:":3" %}
-              <div class="col-md-4">
-                  <div class="card bg-dark text-white my-2">
-                      <div class="card-body">
-                          <h5 class="card-title">@{{ tweet.user.username }}</h5>
-                          <p class="card-text">{{ tweet.content|truncatechars:100 }}</p>
-                          <a href="{% url 'tweet_list' %}" class="btn btn-outline-info btn-sm">Read More</a>
-                      </div>
-                  </div>
-              </div>
-          {% empty %}
-              <p class="text-muted">No tweets yet. Be the first to share something!</p>
-          {% endfor %}
-      </div>
-  </div>
+    <!-- Trending Tweets -->
+    <h3 class="text-light mt-4">🔥 Trending Tweets</h3>
+    <div class="row justify-content-center">
+        {% for tweet in trending_tweets %}
+        <div class="col-md-4">
+            <div class="card my-2">
+                <div class="card-body">
+                    <h5 class="card-title">@{{ tweet.user.username }}</h5>
+                    <p class="card-text">{{ tweet.text|truncatechars:100 }}</p>
+                    <button class="btn btn-outline-danger like-btn" data-tweet-id="{{ tweet.id }}">
+                        ❤️ <span class="likes-count">{{ tweet.total_likes }}</span>
+                    </button>
+                    <a href="{% url 'tweet_detail' tweet.id %}" class="btn btn-outline-info btn-sm mt-2">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No trending tweets yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Latest Tweets -->
+    <h3 class="text-light mt-4">🆕 Latest Tweets</h3>
+    <div class="row justify-content-center">
+        {% for tweet in latest_tweets %}
+        <div class="col-md-4">
+            <div class="card my-2">
+                <div class="card-body">
+                    <h5 class="card-title">@{{ tweet.user.username }}</h5>
+                    <p class="card-text">{{ tweet.text|truncatechars:100 }}</p>
+                    <button class="btn btn-outline-danger like-btn" data-tweet-id="{{ tweet.id }}">
+                        ❤️ <span class="likes-count">{{ tweet.total_likes }}</span>
+                    </button>
+                    <a href="{% url 'tweet_detail' tweet.id %}" class="btn btn-outline-info btn-sm mt-2">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No tweets yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function(){
+    $('.like-btn').click(function(){
+        let btn = $(this);
+        let tweetId = btn.data('tweet-id');
+        $.ajax({
+            url: '/' + tweetId + '/like_ajax/',
+            type: 'POST',
+            data: {'csrfmiddlewaretoken': '{{ csrf_token }}'},
+            success: function(response){
+                btn.find('.likes-count').text(response.likes_count);
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
